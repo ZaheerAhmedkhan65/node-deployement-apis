@@ -15,6 +15,7 @@ app.use(cookieParser());
 const allowedOrigins = [
     'http://localhost',
     'http://localhost:3000',
+    'http://localhost:8000/', // cordova server
     'https://node-deployement-apis.vercel.app'
 ];
 
