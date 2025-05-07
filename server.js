@@ -6,26 +6,15 @@ const cors = require('cors');
 const authRoutes = require("./routes/authRoutes");
 const postsRoutes = require("./routes/postsRoutes");
 const userRoutes = require("./routes/userRoutes");
+const corsMiddleware = require('./middlware/corsMiddleware');
+
 const cookieParser = require('cookie-parser');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins = [
-    'http://localhost',
-    'http://localhost:3000',
-    'http://localhost:8000/', // cordova server
-    'https://node-deployement-apis.vercel.app'
-];
-
-app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
+app.use(corsMiddleware);
 
 app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);
