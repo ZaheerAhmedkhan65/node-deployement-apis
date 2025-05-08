@@ -40,41 +40,60 @@ const signup = async (req, res) => {
 }
 const login = async (req, res) => {
     const { name, password } = req.body;
-    // Find the user
-    const user = await User.findUser(name);
-    if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-    }
 
-    // Compare passwords
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({ message: 'Invalid credentials' });
+    try {
+        // Find the user
+        const user = await User.findUser(name);
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        // Compare passwords
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        // Generate JWT with role
+        const token = jwt.sign(
+            { 
+                userId: user.id, 
+                username: user.name,
+                role: user.role,
+                email: user.email,
+                avatar: user.avatar 
+            },
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
+
+        // Set the token in a cookie
+        res.cookie('token', token, { 
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 
+        });
+
+        // Include user data in response
+        return res.status(200).json({ 
+            message: 'Login successfully', 
+            user: {
+                userId: user.id,
+                username: user.name,
+                role: user.role,
+                email: user.email,
+                avatar: user.avatar 
+            },
+            token
+        });
+
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ message: 'Server error' });
     }
-     // Store user in session
-    // Generate JWT with role
-            const token = jwt.sign(
-                { 
-                    userId: user.id, 
-                    username: user.name,
-                    role: user.role,
-                    email: user.email,
-                    avatar: user.avatar
-                }, 
-                process.env.JWT_SECRET , 
-                { expiresIn: '7d' }
-            );
-            
-            // Set the token in a cookie
-            res.cookie('token', token, { 
-                httpOnly: true, 
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000 
-            });
- 
-    res.status(200).json({ message: 'Login successfully' });
-}
+};
+
 const logout = (req, res) => {
     res.clearCookie('token');
     res.status(200).json({ message: 'Logout successfully' });
